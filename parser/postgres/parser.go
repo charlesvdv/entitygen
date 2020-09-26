@@ -25,7 +25,7 @@ type DDLParser struct {
 }
 
 func (p DDLParser) GetResultingSchemaDefinition() schema.Definition {
-	return p.schemaBuilder.Definition
+	return p.schemaBuilder.Build()
 }
 
 func (p DDLParser) ParseStatement(rawSql string) error {

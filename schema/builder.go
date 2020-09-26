@@ -6,34 +6,79 @@ import (
 )
 
 var (
-	ErrAlreadyExist = errors.New("already exist")
+	ErrDuplicate = errors.New("duplicate")
 )
 
 func NewDefinitionBuilder() *DefinitionBuilder {
 	return &DefinitionBuilder{
-		Definition: newDefinition(),
+		schemas: map[string]SchemaBuilder{},
 	}
 }
 
 type DefinitionBuilder struct {
-	Definition
-}
-
-func (builder *DefinitionBuilder) WithDefaultSchema(name string) *DefinitionBuilder {
-	builder.Definition.defaultSchema = name
-	return builder
+	schemas       map[string]SchemaBuilder
+	defaultSchema string
 }
 
 func (builder *DefinitionBuilder) Build() Definition {
-	return builder.Definition
-}
-
-func (builder *DefinitionBuilder) AddNewSchema(name string) error {
-	schemas := builder.Definition.schemas
-	if _, ok := schemas[name]; ok {
-		return fmt.Errorf("schema '%s' %w", name, ErrAlreadyExist)
+	definition := Definition{
+		defaultSchema: builder.defaultSchema,
+		schemas:       []Schema{},
 	}
 
-	schemas[name] = newSchema(name)
+	for schemaName, schemaVal := range builder.schemas {
+		schema := Schema{
+			name:   schemaName,
+			tables: []Table{},
+		}
+		for tableName, _ := range schemaVal.tables {
+			table := Table{
+				name: tableName,
+			}
+			schema.tables = append(schema.tables, table)
+		}
+		definition.schemas = append(definition.schemas, schema)
+	}
+
+	return definition
+}
+
+func (builder *DefinitionBuilder) WithDefaultSchema(name string) *DefinitionBuilder {
+	builder.defaultSchema = name
+	err := builder.CreateSchema(builder.defaultSchema)
+	if err != nil && !errors.Is(err, ErrDuplicate) {
+		panic("failed to set default schema")
+	}
+	return builder
+}
+
+func (builder *DefinitionBuilder) CreateSchema(name string) error {
+	if _, ok := builder.schemas[name]; ok {
+		return fmt.Errorf("schema '%s' is %w", name, ErrDuplicate)
+	}
+
+	builder.schemas[name] = newSchemaBuilder(name)
 	return nil
+}
+
+func newSchemaBuilder(name string) SchemaBuilder {
+	return SchemaBuilder{
+		name:   name,
+		tables: map[string]TableBuilder{},
+	}
+}
+
+type SchemaBuilder struct {
+	name   string
+	tables map[string]TableBuilder
+}
+
+type TableBuilder struct {
+	name    string
+	columns map[string]column
+}
+
+type column struct {
+	name  string
+	_type string
 }

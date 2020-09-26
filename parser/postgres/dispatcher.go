@@ -42,8 +42,8 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 }
 
 func (d *statementDispatcher) dispatchCreateSchema(stmt *tree.CreateSchema) error {
-	err := d.schemaBuilder.AddNewSchema(stmt.Schema)
-	if errors.Is(err, schema.ErrAlreadyExist) && stmt.IfNotExists {
+	err := d.schemaBuilder.CreateSchema(stmt.Schema)
+	if errors.Is(err, schema.ErrDuplicate) && stmt.IfNotExists {
 		return nil
 	}
 	if err != nil {
