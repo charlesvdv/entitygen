@@ -38,6 +38,29 @@ func (d *statementDispatcher) run(stmt tree.Statement) error {
 }
 
 func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error {
+	schemaName := stmt.Table.SchemaName.Normalize()
+	if schemaName == "" {
+		schemaName = d.schemaBuilder.DefaultSchema()
+	}
+
+	tableBuilder, err := d.schemaBuilder.CreateTable(schemaName, stmt.Table.ObjectName.Normalize())
+	if errors.Is(err, schema.ErrDuplicate) && stmt.IfNotExists {
+		// table already exists, so we skip it
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	for _, tableDef := range stmt.Defs {
+		switch concreteTableDef := tableDef.(type) {
+		case *tree.ColumnTableDef:
+			tableBuilder.AddColumn(concreteTableDef.Name.Normalize(), concreteTableDef.Type.SQLString())
+		default:
+			// do nothing for now
+		}
+	}
+
 	return nil
 }
 

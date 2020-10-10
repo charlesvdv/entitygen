@@ -6,19 +6,24 @@ import (
 )
 
 var (
-	ErrDuplicate = errors.New("duplicate")
+	ErrDuplicate      = errors.New("duplicate")
+	ErrNotFound       = errors.New("not found")
+	ErrSchemaNotFound = fmt.Errorf("schema %w", ErrNotFound)
 )
 
 func NewDefinitionBuilder() *DefinitionBuilder {
 	return &DefinitionBuilder{
-		schemas: map[string]SchemaBuilder{},
+		defaultSchema: "",
+		schemas:       map[string]schemaBuilder{},
 	}
 }
 
 type DefinitionBuilder struct {
-	schemas       map[string]SchemaBuilder
+	schemas       map[string]schemaBuilder
 	defaultSchema string
 }
+
+type schemaBuilder = []*TableBuilder
 
 func (builder *DefinitionBuilder) Build() Definition {
 	definition := Definition{
@@ -26,17 +31,20 @@ func (builder *DefinitionBuilder) Build() Definition {
 		schemas:       []Schema{},
 	}
 
-	for schemaName, schemaVal := range builder.schemas {
+	for schemaName, schemaBuilder := range builder.schemas {
 		schema := Schema{
 			name:   schemaName,
 			tables: []Table{},
 		}
-		for tableName, _ := range schemaVal.tables {
+
+		for _, tableBuilder := range schemaBuilder {
 			table := Table{
-				name: tableName,
+				name:    tableBuilder.name,
+				columns: tableBuilder.columns,
 			}
 			schema.tables = append(schema.tables, table)
 		}
+
 		definition.schemas = append(definition.schemas, schema)
 	}
 
@@ -52,33 +60,61 @@ func (builder *DefinitionBuilder) WithDefaultSchema(name string) *DefinitionBuil
 	return builder
 }
 
+func (builder *DefinitionBuilder) DefaultSchema() string {
+	return builder.defaultSchema
+}
+
 func (builder *DefinitionBuilder) CreateSchema(name string) error {
 	if _, ok := builder.schemas[name]; ok {
 		return fmt.Errorf("schema '%s' is %w", name, ErrDuplicate)
 	}
 
-	builder.schemas[name] = newSchemaBuilder(name)
+	builder.schemas[name] = schemaBuilder{}
 	return nil
 }
 
-func newSchemaBuilder(name string) SchemaBuilder {
-	return SchemaBuilder{
-		name:   name,
-		tables: map[string]TableBuilder{},
+func (builder *DefinitionBuilder) CreateTable(schemaName string, tableName string) (*TableBuilder, error) {
+	schema, ok := builder.schemas[schemaName]
+	if !ok {
+		return nil, fmt.Errorf("'%s': ", ErrSchemaNotFound)
 	}
+
+	for _, tableBuilder := range schema {
+		if tableBuilder.name == tableName {
+			return nil, fmt.Errorf("table '%s' is already created: %w", tableName, ErrDuplicate)
+		}
+	}
+
+	tableBuilder := newTableBuilder(tableName)
+	builder.schemas[schemaName] = append(builder.schemas[schemaName], tableBuilder)
+	return tableBuilder, nil
 }
 
-type SchemaBuilder struct {
-	name   string
-	tables map[string]TableBuilder
+func newTableBuilder(name string) *TableBuilder {
+	return &TableBuilder{
+		name:    name,
+		columns: []Column{},
+	}
 }
 
 type TableBuilder struct {
 	name    string
-	columns map[string]column
+	columns []Column
 }
 
-type column struct {
-	name  string
-	_type string
+func newColumn(name string, _type string) Column {
+	return Column{
+		name:  name,
+		_type: _type,
+	}
+}
+
+func (builder *TableBuilder) AddColumn(name string, _type string) error {
+	for _, column := range builder.columns {
+		if column.Name() == name {
+			return fmt.Errorf("column '%s' is %w", name, ErrDuplicate)
+		}
+	}
+	builder.columns = append(builder.columns, newColumn(name, _type))
+	return nil
 }
