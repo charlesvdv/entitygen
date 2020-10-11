@@ -43,7 +43,7 @@ func NewTypeDate() *BuiltinType {
 }
 
 func NewTypeTime() *BuiltinType {
-	return newBuiltinType(TypeDate)
+	return newBuiltinType(TypeTime)
 }
 
 func NewTypeTimestamp() *BuiltinType {
