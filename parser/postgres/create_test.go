@@ -23,6 +23,12 @@ func parseOneSQLError(t *testing.T, sql string) error {
 	return err
 }
 
+func requireBuiltinType(t *testing.T, _type schema.Type, typeName string) {
+	builtinType, ok := _type.(*schema.BuiltinType)
+	require.Truef(t, ok, "should be a builtin type")
+	require.Equal(t, builtinType.Name(), typeName)
+}
+
 func TestCreateTable(t *testing.T) {
 	const sql = `
 		CREATE SCHEMA test1;
@@ -33,21 +39,23 @@ func TestCreateTable(t *testing.T) {
 	`
 
 	definition := parseOneSQL(t, sql)
-	schema := definition.Schema("test1")
-	require.NotNil(t, schema)
+	test1Schema := definition.Schema("test1")
+	require.NotNil(t, test1Schema)
 
-	table := schema.Table("test")
+	table := test1Schema.Table("test")
 	require.NotNil(t, table)
-	require.Equal(t, 1, len(schema.Tables()))
+	require.Equal(t, 1, len(test1Schema.Tables()))
 
 	require.Equal(t, 2, len(table.Columns()))
 	idColumn := table.Column("id")
 	require.NotNil(t, idColumn)
 	require.Equal(t, "id", idColumn.Name())
+	requireBuiltinType(t, idColumn.Type(), schema.TypeBigInt)
 
 	testColumn := table.Column("test")
 	require.NotNil(t, testColumn)
 	require.Equal(t, "test", testColumn.Name())
+	requireBuiltinType(t, testColumn.Type(), schema.TypeString)
 }
 
 func TestCreateSchema(t *testing.T) {

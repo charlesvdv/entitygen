@@ -57,7 +57,7 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 	for _, tableDef := range stmt.Defs {
 		switch concreteTableDef := tableDef.(type) {
 		case *tree.ColumnTableDef:
-			column, err := schema.NewColumn(concreteTableDef.Name.Normalize())
+			column, err := schema.NewColumn(concreteTableDef.Name.Normalize(), convertType(concreteTableDef.Type))
 			if err != nil {
 				return fmt.Errorf("'%s': fail to add column: %w", stmt.Table.Table(), err)
 			}

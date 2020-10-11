@@ -125,20 +125,26 @@ func (table *Table) AddColumn(column Column) error {
 	return nil
 }
 
-func NewColumn(name string) (Column, error) {
+type Column struct {
+	name  string
+	_type Type
+}
+
+func NewColumn(name string, _type Type) (Column, error) {
 	if name == "" {
 		return Column{}, errors.New("column name cannot be empty")
 	}
 
 	return Column{
-		name: name,
+		name:  name,
+		_type: _type,
 	}, nil
-}
-
-type Column struct {
-	name string
 }
 
 func (column Column) Name() string {
 	return column.name
+}
+
+func (column Column) Type() Type {
+	return column._type
 }
