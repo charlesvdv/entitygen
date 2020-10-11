@@ -1,81 +1,144 @@
 package schema
 
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrAlreadyExists = errors.New("already exists")
+)
+
+func NewDefinition(defaultSchema string) Definition {
+	def := Definition{
+		defaultSchema: defaultSchema,
+		schemas:       []*Schema{},
+	}
+	def.CreateSchema(defaultSchema)
+	return def
+}
+
 type Definition struct {
 	defaultSchema string
-	schemas       []Schema
+	schemas       []*Schema
 }
 
-func (def Definition) DefaultSchema() string {
-	return def.defaultSchema
+func (def Definition) DefaultSchema() *Schema {
+	return def.Schema(def.defaultSchema)
 }
 
-func (def Definition) Schemas() []Schema {
+func (def Definition) Schemas() []*Schema {
 	return def.schemas
 }
 
 func (def Definition) Schema(name string) *Schema {
-	for _, schema := range def.schemas {
-		if schema.Name() == name {
-			return &schema
+	for i := range def.schemas {
+		if def.schemas[i].Name() == name {
+			return def.schemas[i]
 		}
 	}
 	return nil
 }
 
+func (def *Definition) CreateSchema(name string) (*Schema, error) {
+	if def.Schema(name) != nil {
+		return nil, fmt.Errorf("schema '%s' %w", name, ErrAlreadyExists)
+	}
+	newSchema := newSchema(name)
+	def.schemas = append(def.schemas, &newSchema)
+	return &newSchema, nil
+}
+
+func newSchema(name string) Schema {
+	return Schema{
+		name:   name,
+		tables: []*Table{},
+	}
+}
+
 type Schema struct {
 	name   string
-	tables []Table
+	tables []*Table
 }
 
 func (schema Schema) Name() string {
 	return schema.name
 }
 
-func (schema Schema) Tables() []Table {
+func (schema Schema) Tables() []*Table {
 	return schema.tables
 }
 
 func (schema Schema) Table(name string) *Table {
-	for _, table := range schema.tables {
-		if table.Name() == name {
-			return &table
+	for i := range schema.tables {
+		if schema.tables[i].Name() == name {
+			return schema.tables[i]
 		}
 	}
 	return nil
 }
 
+func (schema *Schema) CreateTable(name string) (*Table, error) {
+	if schema.Table(name) != nil {
+		return nil, fmt.Errorf("table '%s' %w", name, ErrAlreadyExists)
+	}
+	table := newTable(name)
+	schema.tables = append(schema.tables, &table)
+	return &table, nil
+}
+
+func newTable(name string) Table {
+	return Table{
+		name:    name,
+		columns: []*Column{},
+	}
+}
+
 type Table struct {
 	name    string
-	columns []Column
+	columns []*Column
 }
 
 func (table Table) Name() string {
 	return table.name
 }
 
-func (table Table) Columns() []Column {
+func (table Table) Columns() []*Column {
 	return table.columns
 }
 
 func (table Table) Column(name string) *Column {
-	for _, column := range table.columns {
-		if column.Name() == name {
-			return &column
+	for i := range table.columns {
+		if table.columns[i].Name() == name {
+			return table.columns[i]
 		}
 	}
 
 	return nil
 }
 
+func (table *Table) AddColumn(column Column) error {
+	if table.Column(column.Name()) != nil {
+		return fmt.Errorf("column '%s' %w", column.Name(), ErrAlreadyExists)
+	}
+	table.columns = append(table.columns, &column)
+	return nil
+}
+
+func NewColumn(name string) (Column, error) {
+	if name == "" {
+		return Column{}, errors.New("column name cannot be empty")
+	}
+
+	return Column{
+		name: name,
+	}, nil
+}
+
 type Column struct {
-	name  string
-	_type string
+	name string
 }
 
 func (column Column) Name() string {
 	return column.name
-}
-
-func (column Column) Type() string {
-	return column._type
 }

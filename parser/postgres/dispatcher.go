@@ -2,23 +2,24 @@ package postgres
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/charlesvdv/entitygen/schema"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 )
 
-func dispatchStatementToBuilder(stmt tree.Statement, schemaBuilder *schema.DefinitionBuilder) error {
-	dispatcher := newStatementDispatcher(schemaBuilder)
+func dispatchStatementToBuilder(stmt tree.Statement, schemaDefinition *schema.Definition) error {
+	dispatcher := newStatementDispatcher(schemaDefinition)
 	return dispatcher.run(stmt)
 }
 
 type statementDispatcher struct {
-	schemaBuilder *schema.DefinitionBuilder
+	schemaDefinition *schema.Definition
 }
 
-func newStatementDispatcher(schemaBuilder *schema.DefinitionBuilder) statementDispatcher {
+func newStatementDispatcher(schemaDefinition *schema.Definition) statementDispatcher {
 	return statementDispatcher{
-		schemaBuilder: schemaBuilder,
+		schemaDefinition: schemaDefinition,
 	}
 }
 
@@ -38,24 +39,29 @@ func (d *statementDispatcher) run(stmt tree.Statement) error {
 }
 
 func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error {
+	schemaDef := d.schemaDefinition.DefaultSchema()
 	schemaName := stmt.Table.SchemaName.Normalize()
-	if schemaName == "" {
-		schemaName = d.schemaBuilder.DefaultSchema()
+	if schemaName != "" {
+		schemaDef = d.schemaDefinition.Schema(schemaName)
 	}
 
-	tableBuilder, err := d.schemaBuilder.CreateTable(schemaName, stmt.Table.ObjectName.Normalize())
-	if errors.Is(err, schema.ErrDuplicate) && stmt.IfNotExists {
+	table, err := schemaDef.CreateTable(stmt.Table.ObjectName.Normalize())
+	if errors.Is(err, schema.ErrAlreadyExists) && stmt.IfNotExists {
 		// table already exists, so we skip it
 		return nil
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("'%s': %w", stmt.Table.Table(), err)
 	}
 
 	for _, tableDef := range stmt.Defs {
 		switch concreteTableDef := tableDef.(type) {
 		case *tree.ColumnTableDef:
-			tableBuilder.AddColumn(concreteTableDef.Name.Normalize(), concreteTableDef.Type.SQLString())
+			column, err := schema.NewColumn(concreteTableDef.Name.Normalize())
+			if err != nil {
+				return fmt.Errorf("'%s': fail to add column: %w", stmt.Table.Table(), err)
+			}
+			table.AddColumn(column)
 		default:
 			// do nothing for now
 		}
@@ -65,8 +71,8 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 }
 
 func (d *statementDispatcher) dispatchCreateSchema(stmt *tree.CreateSchema) error {
-	err := d.schemaBuilder.CreateSchema(stmt.Schema)
-	if errors.Is(err, schema.ErrDuplicate) && stmt.IfNotExists {
+	_, err := d.schemaDefinition.CreateSchema(stmt.Schema)
+	if errors.Is(err, schema.ErrAlreadyExists) && stmt.IfNotExists {
 		return nil
 	}
 	if err != nil {

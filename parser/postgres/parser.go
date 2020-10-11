@@ -12,20 +12,19 @@ const (
 )
 
 func NewDDLParser() DDLParser {
-	schemaBuilder := schema.NewDefinitionBuilder().
-		WithDefaultSchema(defaultSchema)
+	schemaDefinition := schema.NewDefinition(defaultSchema)
 
 	return DDLParser{
-		schemaBuilder: schemaBuilder,
+		schemaDefinition: &schemaDefinition,
 	}
 }
 
 type DDLParser struct {
-	schemaBuilder *schema.DefinitionBuilder
+	schemaDefinition *schema.Definition
 }
 
 func (p DDLParser) GetResultingSchemaDefinition() schema.Definition {
-	return p.schemaBuilder.Build()
+	return *p.schemaDefinition
 }
 
 func (p DDLParser) ParseStatement(rawSql string) error {
@@ -50,5 +49,5 @@ func (p DDLParser) applyStatement(stmt parser.Statement) error {
 		return nil
 	}
 
-	return dispatchStatementToBuilder(stmt.AST, p.schemaBuilder)
+	return dispatchStatementToBuilder(stmt.AST, p.schemaDefinition)
 }

@@ -44,12 +44,10 @@ func TestCreateTable(t *testing.T) {
 	idColumn := table.Column("id")
 	require.NotNil(t, idColumn)
 	require.Equal(t, "id", idColumn.Name())
-	require.Equal(t, "INT8", idColumn.Type())
 
 	testColumn := table.Column("test")
 	require.NotNil(t, testColumn)
 	require.Equal(t, "test", testColumn.Name())
-	require.Equal(t, "STRING", testColumn.Type())
 }
 
 func TestCreateSchema(t *testing.T) {
