@@ -107,7 +107,6 @@ func TestColumnBuiltinDataType(t *testing.T) {
 	requireBuiltinType(t, schema.TypeBigInt, table.Column("int8").Type())
 	requireBuiltinType(t, schema.TypeBoolean, table.Column("bool").Type())
 	requireBuiltinType(t, schema.TypeBoolean, table.Column("boolean").Type())
-	//requireBuiltinType(t, table.Column("float8").Type(), schema.TypeFloat)
 	requireBuiltinType(t, schema.TypeInteger, table.Column("int4").Type())
 	// TODO: on https://www.postgresql.org/docs/current/datatype.html, `int` should be aliased to `integer`.
 	// but here, it returns `BIGINT` why??
