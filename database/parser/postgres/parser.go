@@ -4,7 +4,7 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/sql/parser"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 
-	"github.com/charlesvdv/entitygen/schema"
+	"github.com/charlesvdv/entitygen/database"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 )
 
 func NewDDLParser() DDLParser {
-	schemaDefinition := schema.NewDefinition(defaultSchema)
+	schemaDefinition := database.NewDefinition(defaultSchema)
 
 	return DDLParser{
 		schemaDefinition: &schemaDefinition,
@@ -20,10 +20,10 @@ func NewDDLParser() DDLParser {
 }
 
 type DDLParser struct {
-	schemaDefinition *schema.Definition
+	schemaDefinition *database.Definition
 }
 
-func (p DDLParser) GetResultingSchemaDefinition() schema.Definition {
+func (p DDLParser) GetResultingSchemaDefinition() database.Definition {
 	return *p.schemaDefinition
 }
 

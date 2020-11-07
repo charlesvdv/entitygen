@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/charlesvdv/entitygen/parser/postgres"
-	"github.com/charlesvdv/entitygen/schema"
+	"github.com/charlesvdv/entitygen/database"
+	"github.com/charlesvdv/entitygen/database/parser/postgres"
 )
 
-func parseOneSQL(t *testing.T, sql string) schema.Definition {
+func parseOneSQL(t *testing.T, sql string) database.Definition {
 	parser := postgres.NewDDLParser()
 	err := parser.ParseStatement(sql)
 	require.NoError(t, err)
@@ -23,8 +23,8 @@ func parseOneSQLError(t *testing.T, sql string) error {
 	return err
 }
 
-func requireBuiltinType(t *testing.T, expected string, _type schema.Type) {
-	builtinType, ok := _type.(*schema.BuiltinType)
+func requireBuiltinType(t *testing.T, expected string, _type database.Type) {
+	builtinType, ok := _type.(*database.BuiltinType)
 	require.Truef(t, ok, "should be a builtin type")
 	require.Equal(t, builtinType.Name(), expected)
 }
@@ -50,12 +50,12 @@ func TestCreateTable(t *testing.T) {
 	idColumn := table.Column("id")
 	require.NotNil(t, idColumn)
 	require.Equal(t, "id", idColumn.Name())
-	requireBuiltinType(t, schema.TypeBigInt, idColumn.Type())
+	requireBuiltinType(t, database.TypeBigInt, idColumn.Type())
 
 	testColumn := table.Column("test")
 	require.NotNil(t, testColumn)
 	require.Equal(t, "test", testColumn.Name())
-	requireBuiltinType(t, schema.TypeString, testColumn.Type())
+	requireBuiltinType(t, database.TypeString, testColumn.Type())
 }
 
 func TestCreateTableOnDefaultSchema(t *testing.T) {
@@ -102,23 +102,23 @@ func TestColumnBuiltinDataType(t *testing.T) {
 
 	table := parseOneSQL(t, sql).DefaultSchema().Table("test")
 	require.NotNil(t, table)
-	requireBuiltinType(t, schema.TypeBigInt, table.Column("serial").Type())
-	requireBuiltinType(t, schema.TypeBigInt, table.Column("bigint").Type())
-	requireBuiltinType(t, schema.TypeBigInt, table.Column("int8").Type())
-	requireBuiltinType(t, schema.TypeBoolean, table.Column("bool").Type())
-	requireBuiltinType(t, schema.TypeBoolean, table.Column("boolean").Type())
-	requireBuiltinType(t, schema.TypeInteger, table.Column("int4").Type())
+	requireBuiltinType(t, database.TypeBigInt, table.Column("serial").Type())
+	requireBuiltinType(t, database.TypeBigInt, table.Column("bigint").Type())
+	requireBuiltinType(t, database.TypeBigInt, table.Column("int8").Type())
+	requireBuiltinType(t, database.TypeBoolean, table.Column("bool").Type())
+	requireBuiltinType(t, database.TypeBoolean, table.Column("boolean").Type())
+	requireBuiltinType(t, database.TypeInteger, table.Column("int4").Type())
 	// TODO: on https://www.postgresql.org/docs/current/datatype.html, `int` should be aliased to `integer`.
 	// but here, it returns `BIGINT` why??
-	requireBuiltinType(t, schema.TypeBigInt, table.Column("int").Type())
-	requireBuiltinType(t, schema.TypeBigInt, table.Column("integer").Type())
-	requireBuiltinType(t, schema.TypeDecimal, table.Column("float8").Type())
-	requireBuiltinType(t, schema.TypeDecimal, table.Column("doublepres").Type())
-	requireBuiltinType(t, schema.TypeFloat, table.Column("float4").Type())
-	requireBuiltinType(t, schema.TypeFloat, table.Column("real").Type())
-	requireBuiltinType(t, schema.TypeTime, table.Column("time").Type())
-	requireBuiltinType(t, schema.TypeTimestamp, table.Column("timestamp").Type())
-	requireBuiltinType(t, schema.TypeDate, table.Column("date").Type())
+	requireBuiltinType(t, database.TypeBigInt, table.Column("int").Type())
+	requireBuiltinType(t, database.TypeBigInt, table.Column("integer").Type())
+	requireBuiltinType(t, database.TypeDecimal, table.Column("float8").Type())
+	requireBuiltinType(t, database.TypeDecimal, table.Column("doublepres").Type())
+	requireBuiltinType(t, database.TypeFloat, table.Column("float4").Type())
+	requireBuiltinType(t, database.TypeFloat, table.Column("real").Type())
+	requireBuiltinType(t, database.TypeTime, table.Column("time").Type())
+	requireBuiltinType(t, database.TypeTimestamp, table.Column("timestamp").Type())
+	requireBuiltinType(t, database.TypeDate, table.Column("date").Type())
 }
 
 func TestCreateSchema(t *testing.T) {

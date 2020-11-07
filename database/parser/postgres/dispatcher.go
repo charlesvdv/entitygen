@@ -4,20 +4,20 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/charlesvdv/entitygen/schema"
+	"github.com/charlesvdv/entitygen/database"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 )
 
-func dispatchStatementToBuilder(stmt tree.Statement, schemaDefinition *schema.Definition) error {
+func dispatchStatementToBuilder(stmt tree.Statement, schemaDefinition *database.Definition) error {
 	dispatcher := newStatementDispatcher(schemaDefinition)
 	return dispatcher.run(stmt)
 }
 
 type statementDispatcher struct {
-	schemaDefinition *schema.Definition
+	schemaDefinition *database.Definition
 }
 
-func newStatementDispatcher(schemaDefinition *schema.Definition) statementDispatcher {
+func newStatementDispatcher(schemaDefinition *database.Definition) statementDispatcher {
 	return statementDispatcher{
 		schemaDefinition: schemaDefinition,
 	}
@@ -46,7 +46,7 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 	}
 
 	table, err := schemaDef.CreateTable(stmt.Table.ObjectName.Normalize())
-	if errors.Is(err, schema.ErrAlreadyExists) && stmt.IfNotExists {
+	if errors.Is(err, database.ErrAlreadyExists) && stmt.IfNotExists {
 		// table already exists, so we skip it
 		return nil
 	}
@@ -57,7 +57,7 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 	for _, tableDef := range stmt.Defs {
 		switch concreteTableDef := tableDef.(type) {
 		case *tree.ColumnTableDef:
-			column, err := schema.NewColumn(concreteTableDef.Name.Normalize(), convertType(concreteTableDef.Type))
+			column, err := database.NewColumn(concreteTableDef.Name.Normalize(), convertType(concreteTableDef.Type))
 			if err != nil {
 				return fmt.Errorf("'%s': fail to add column: %w", stmt.Table.Table(), err)
 			}
@@ -72,7 +72,7 @@ func (d *statementDispatcher) dispatchCreateTable(stmt *tree.CreateTable) error 
 
 func (d *statementDispatcher) dispatchCreateSchema(stmt *tree.CreateSchema) error {
 	_, err := d.schemaDefinition.CreateSchema(stmt.Schema)
-	if errors.Is(err, schema.ErrAlreadyExists) && stmt.IfNotExists {
+	if errors.Is(err, database.ErrAlreadyExists) && stmt.IfNotExists {
 		return nil
 	}
 	if err != nil {
