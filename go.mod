@@ -14,6 +14,7 @@ require (
 	github.com/cockroachdb/ttycolor v0.0.0-20180709150743-a1d5aaeb377d // indirect
 	github.com/codahale/hdrhistogram v0.9.0 // indirect
 	github.com/getsentry/raven-go v0.2.0 // indirect
+	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/grpc-ecosystem/grpc-gateway v1.15.0 // indirect
 	github.com/jaegertracing/jaeger v1.19.2 // indirect
 	github.com/kr/pretty v0.2.1 // indirect

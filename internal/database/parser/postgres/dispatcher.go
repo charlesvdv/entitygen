@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/charlesvdv/entitygen/database"
+	"github.com/charlesvdv/entitygen/internal/database"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 )
 

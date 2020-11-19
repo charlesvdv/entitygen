@@ -4,7 +4,7 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/sql/parser"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 
-	"github.com/charlesvdv/entitygen/database"
+	"github.com/charlesvdv/entitygen/internal/database"
 )
 
 const (
@@ -27,8 +27,8 @@ func (p DDLParser) GetResultingSchemaDefinition() database.Definition {
 	return *p.schemaDefinition
 }
 
-func (p DDLParser) ParseStatement(rawSql string) error {
-	statements, err := parser.Parse(rawSql)
+func (p DDLParser) ParseSQL(rawSQL string) error {
+	statements, err := parser.Parse(rawSQL)
 	if err != nil {
 		return err
 	}

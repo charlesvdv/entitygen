@@ -5,20 +5,20 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/charlesvdv/entitygen/database"
-	"github.com/charlesvdv/entitygen/database/parser/postgres"
+	"github.com/charlesvdv/entitygen/internal/database"
+	"github.com/charlesvdv/entitygen/internal/database/parser/postgres"
 )
 
 func parseOneSQL(t *testing.T, sql string) database.Definition {
 	parser := postgres.NewDDLParser()
-	err := parser.ParseStatement(sql)
+	err := parser.ParseSQL(sql)
 	require.NoError(t, err)
 	return parser.GetResultingSchemaDefinition()
 }
 
 func parseOneSQLError(t *testing.T, sql string) error {
 	parser := postgres.NewDDLParser()
-	err := parser.ParseStatement(sql)
+	err := parser.ParseSQL(sql)
 	require.Error(t, err)
 	return err
 }
