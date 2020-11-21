@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	gomigratesource "github.com/golang-migrate/migrate/source"
+	gomigratesource "github.com/golang-migrate/migrate/v4/source"
 )
 
 var ErrEndOfIteration = errors.New("end of iterations")
